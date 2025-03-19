@@ -31,6 +31,27 @@ app.post("/user", userAuth, (req, res) => {
     res.send("User data posted successfully");
 });
 
+app.get("/getUserData", (req, res) =>{
+    // throw new error("egdg");
+    // res.send("User data send");
+
+    // or better use try catch
+    try {
+        throw new error("egdg");
+        res.send("User data send");
+    } catch (error) {
+        res.status(500).send("Some error occured, Kindly contact Support Team");
+    }
+})
+
+
+// error handling
+app.use("/", (err, req, res, next) => {
+    if(err){
+        res.status(500).send("Something went wrong");
+    }
+})
+
 app.listen(3000, () => {
     console.log("Hello from the server");
 });
