@@ -2,23 +2,33 @@ const express = require("express");
 
 const app = express();
 
-app.get("/user", (req, res) => {
+// Handle Auth middleware 
+
+const {adminAuth, userAuth} = require("./middlewares/auth");
+
+app.use("/admin", adminAuth)
+
+app.get("/admin/data", (req, res) => {
     res.send({FirstName : "Rishi", LastName : "Pandey"});
 });
 
-app.post("/user", (req, res) => {
+app.post("/admin/data", (req, res) => {
     // saving data to db
     res.send("Saved user's data successfully");
 });
 
-app.delete("/user", (req, res) => {
+app.delete("/admin/data", (req, res) => {
     // delete user
-    res.send("Delted user successfully");
+    res.send("Deleted user successfully");
 });
 
 
-app.use("/test", (req, res) => {
-    res.send("Test successfully runed");
+app.get("/user", userAuth, (req, res) => {
+    res.send("User data fetched");
+});
+
+app.post("/user", userAuth, (req, res) => {
+    res.send("User data posted successfully");
 });
 
 app.listen(3000, () => {
