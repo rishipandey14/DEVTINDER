@@ -5,17 +5,18 @@ const app = express();
 
 app.post("/signup", async (req, res) => {
     const user = new User({
-        firstName: "Rishi",
-        lastName: "Pandey",
-        emailId: "hopesalive1403@gmail.com",
-        password: "ibgiwjbg",
-        age: 21,
-        gender: "M"
+        firstName: "sohini",
+        lastName: "Halder",
+        emailId: "soohu1403@gmail.com",
+        password: "ibgwegfjiwjbg",
+        age: 20,
+        gender: "F"
     });
 
     try {
         await user.save();
         console.log("User Added Successfully")
+        res.status(201).send({message: "User added successfully", user});
     } catch (err) {
         res.status(400).send("Error saving the user : " + err.message);
     }
