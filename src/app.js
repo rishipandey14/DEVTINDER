@@ -11,12 +11,34 @@ app.post("/signup", async (req, res) => {
 
     try {
         await user.save();
+
         console.log("User Added Successfully")
+        
         res.status(201).send({message: "User added successfully", user});
     } catch (err) {
         res.status(400).send("Error saving the user : " + err.message);
     }
-})
+});
+
+// get user by email
+app.get("/user", async (req, res) => {
+    const userEmail = req.body.emailId;
+
+    try {
+        const user = await User.find({emailId: userEmail});
+
+        if(user.length === 0){
+            res.status(400).send("user not found");
+        } else {
+            res.send(user);
+        }
+    } catch (err) {
+        res.status(400).send("something went wrong");
+    }
+});
+
+// Feed API - GET /feed - get all the users from the database
+
 
 
 connectDB()
