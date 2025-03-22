@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const connectDB = require('./config/database');
 const User = require('./models/user')
-const {validateSignupData} = require("./utils/validation")
+const { validateSignupData } = require("./utils/validation")
 const app = express();
 
 app.use(express.json())
@@ -14,28 +14,51 @@ app.post("/signup", async (req, res) => {
         // validation of data
         validateSignupData(req);
 
-        const {firstName, lastName, emailId, password} = req.body;
+        const { firstName, lastName, emailId, password } = req.body;
 
         // encrypt the password
         const hashedPassword = await bcrypt.hash(password, 10);
         console.log(hashedPassword);
-        
-        
+
+
         // create new instance of the User model
         const user = new User({
             firstName,
             lastName,
             emailId,
-            password : hashedPassword,
+            password: hashedPassword,
         });
 
         await user.save();
 
         console.log("User Added Successfully")
-        
-        res.status(201).send({message: "User added successfully", user});
+
+        res.status(201).send({ message: "User added successfully", user });
     } catch (err) {
         res.status(400).send("Error saving the user : " + err.message);
+    }
+});
+
+// login API
+app.post("/login", async (req, res) => {
+    try {
+        const { emailId, password } = req.body;
+
+        const user = await User.findOne({ emailId: emailId });
+        if (!user) {
+            throw new Error("Invalid credentials");
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password)
+
+        if(isPasswordValid){
+            res.send("Login Successfully");
+        }
+        else {
+            throw new Error("Invalid credentials");
+        }
+    } catch (err) {
+        res.status(400).send("ERROR : " + err.message);
     }
 });
 
@@ -44,9 +67,9 @@ app.get("/user", async (req, res) => {
     const userEmail = req.body.emailId;
 
     try {
-        const user = await User.find({emailId: userEmail});
+        const user = await User.find({ emailId: userEmail });
 
-        if(user.length === 0){
+        if (user.length === 0) {
             res.status(400).send("user not found");
         } else {
             res.send(user);
@@ -70,7 +93,7 @@ app.get("/feed", async (req, res) => {
 // delete user by id
 app.delete("/user", async (req, res) => {
     const userId = req.body.userId;
-    
+
     try {
         const user = await User.findByIdAndDelete(userId);
         res.send("user deleted successfully");
@@ -102,13 +125,13 @@ app.patch("/user/:userId", async (req, res) => {
             throw new Error("update not allowed");
         }
 
-        if(data?.skills.length > 10 ) {
+        if (data?.skills.length > 10) {
             throw new Error("Skills can not be more than 10")
         }
 
-        const user = await User.findByIdAndUpdate(userId, data, {returnDocument: 'after', runValidators: true});
-        
-        res.send({message: "user updated successfully", user});
+        const user = await User.findByIdAndUpdate(userId, data, { returnDocument: 'after', runValidators: true });
+
+        res.send({ message: "user updated successfully", user });
     } catch (err) {
         res.status(400).send("update failed: " + err.message)
     }
@@ -121,12 +144,12 @@ app.patch("/user", async (req, res) => {
     const data = req.body;
 
     try {
-        const user = await User.findOneAndUpdate({emailId : emailId}, data, { new: true });
+        const user = await User.findOneAndUpdate({ emailId: emailId }, data, { new: true });
 
         if (!user) {
             return res.status(404).send({ message: "User not found" });
         } else {
-            res.send({message: "user updated successfully", user});
+            res.send({ message: "user updated successfully", user });
         }
     } catch (err) {
         res.status(400).send("something went wrong")
