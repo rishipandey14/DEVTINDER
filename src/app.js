@@ -1,15 +1,17 @@
 const express = require("express");
+const app = express();
 const bcrypt = require("bcrypt");
 const connectDB = require('./config/database');
 const User = require('./models/user')
 const { validateSignupData } = require("./utils/validation")
-const app = express();
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 app.use(express.json())
+app.use(cookieParser())
 
 // add user in the database / signup
 app.post("/signup", async (req, res) => {
-
     try {
         // validation of data
         validateSignupData(req);
@@ -18,8 +20,6 @@ app.post("/signup", async (req, res) => {
 
         // encrypt the password
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log(hashedPassword);
-
 
         // create new instance of the User model
         const user = new User({
@@ -30,9 +30,6 @@ app.post("/signup", async (req, res) => {
         });
 
         await user.save();
-
-        console.log("User Added Successfully")
-
         res.status(201).send({ message: "User added successfully", user });
     } catch (err) {
         res.status(400).send("Error saving the user : " + err.message);
@@ -52,6 +49,11 @@ app.post("/login", async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.password)
 
         if(isPasswordValid){
+            // create a JWT token
+            const token = await jwt.sign({_id: user._id}, "djfhbufhbi");
+
+            // Add the token to cookie and send response back to the user
+            res.cookie("token", token);
             res.send("Login Successfully");
         }
         else {
@@ -61,6 +63,28 @@ app.post("/login", async (req, res) => {
         res.status(400).send("ERROR : " + err.message);
     }
 });
+
+// get user Profile API
+app.get("/profile", async (req, res) => {
+    try{
+        const cookies = req.cookies;
+        const {token} = cookies;
+
+        if(!token) throw new Error("Invalid token");
+
+        // validate my token
+        const decodedMessage = await jwt.verify(token, "djfhbufhbi");
+        const {_id} = decodedMessage;
+
+        const user = await User.findById(_id);
+
+        if(!user) throw new Error("user doesn't exist");
+
+        res.send(user);
+    } catch (err) {
+        res.status(400).send("ERROR : " + err.message);
+    }
+})
 
 // get user by email
 app.get("/user", async (req, res) => {
