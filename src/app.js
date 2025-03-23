@@ -6,6 +6,7 @@ const User = require('./models/user')
 const { validateSignupData } = require("./utils/validation")
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const {userAuth} = require("./middlewares/auth");
 
 app.use(express.json())
 app.use(cookieParser())
@@ -50,10 +51,10 @@ app.post("/login", async (req, res) => {
 
         if(isPasswordValid){
             // create a JWT token
-            const token = await jwt.sign({_id: user._id}, "djfhbufhbi");
+            const token = await jwt.sign({_id: user._id}, "djfhbufhbi", {expiresIn : '7d'});
 
             // Add the token to cookie and send response back to the user
-            res.cookie("token", token);
+            res.cookie("token", token, {expires : new Date(Date.now() + 8 * 3600000)});
             res.send("Login Successfully");
         }
         else {
@@ -65,21 +66,9 @@ app.post("/login", async (req, res) => {
 });
 
 // get user Profile API
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
     try{
-        const cookies = req.cookies;
-        const {token} = cookies;
-
-        if(!token) throw new Error("Invalid token");
-
-        // validate my token
-        const decodedMessage = await jwt.verify(token, "djfhbufhbi");
-        const {_id} = decodedMessage;
-
-        const user = await User.findById(_id);
-
-        if(!user) throw new Error("user doesn't exist");
-
+        const user = req.user;
         res.send(user);
     } catch (err) {
         res.status(400).send("ERROR : " + err.message);
@@ -104,7 +93,7 @@ app.get("/user", async (req, res) => {
 });
 
 // Feed API - GET /feed - get all the users from the database
-app.get("/feed", async (req, res) => {
+app.get("/feed", userAuth, async (req, res) => {
     try {
         const users = await User.find({});
         res.send(users);
