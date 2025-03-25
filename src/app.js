@@ -1,10 +1,7 @@
 const express = require("express");
 const app = express();
-const bcrypt = require("bcrypt");
 const connectDB = require('./config/database');
 const User = require('./models/user')
-const { validateSignupData } = require("./utils/validation")
-const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const {userAuth} = require("./middlewares/auth");
 
@@ -14,6 +11,10 @@ app.use(cookieParser());
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
+
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestRouter);
 
 
 
