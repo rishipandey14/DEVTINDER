@@ -2,12 +2,13 @@ const express = require("express");
 const userRouter = express.Router();
 const { userAuth } = require("../middlewares/auth");
 const ConnectionRequest = require("../models/connectionRequest");
+const User = require("../models/user");
 
 const USER_SAFE_DATA = "firstName lastName age about gender";
 
 
 // get all the pending connection request for the loggedIn user
-userRouter.get("/user/request", userAuth, async (req, res) => {
+userRouter.get("/user/request/received", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
@@ -56,6 +57,45 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
     res.status(400).json({
       error: err.message,
     });
+  }
+});
+
+
+userRouter.get("/user/feed", userAuth, async (req, res) => {
+  try {
+
+    // user should see all the cards except
+    // 0 -> his own card
+    // 1 -> the card whom he has already send requests
+    // 2 -> the cards with whom he already has connection
+    // 3 -> ignored people
+
+    const loggedInUser = req.user;
+
+    // find all connection requests (sent + receive)
+    const connectionRequest = await ConnectionRequest.find({
+      $or: [
+        { fromUserId: loggedInUser._id },
+        { toUserId: loggedInUser._id },
+      ]
+    }).select("fromUserId toUserId");
+
+    const hideUsersFromFeed = new Set();
+    connectionRequest.forEach((req) => {
+      hideUsersFromFeed.add(req.fromUserId.toString());
+      hideUsersFromFeed.add(req.toUserId.toString());
+    });
+
+    const user = await User.find({
+      $and : [
+        {_id : { $nin : Array.from(hideUsersFromFeed)}},
+        {_id : { $ne : loggedInUser._id}},
+      ]
+    }).select(USER_SAFE_DATA);
+
+    res.send(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 
