@@ -10,16 +10,14 @@ authRouter.post("/signup", async (req, res) => {
         // validation of data
         validateSignupData(req);
 
-        const { firstName, lastName, emailId, password } = req.body;
+        const {password, ...rest } = req.body;
 
         // encrypt the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // create new instance of the User model
         const user = new User({
-            firstName,
-            lastName,
-            emailId,
+            ...rest,
             password: hashedPassword,
         });
 
@@ -47,7 +45,7 @@ authRouter.post("/login", async (req, res) => {
 
             // Add the token to cookie and send response back to the user
             res.cookie("token", token, { expires: new Date(Date.now() + 8 * 3600000) });
-            res.send("Login Successfully");
+            res.send(user);
         }
         else {
             throw new Error("Invalid credentials");
