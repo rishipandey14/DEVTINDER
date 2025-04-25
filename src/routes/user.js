@@ -4,7 +4,7 @@ const { userAuth } = require("../middlewares/auth");
 const ConnectionRequest = require("../models/connectionRequest");
 const User = require("../models/user");
 
-const USER_SAFE_DATA = "firstName lastName age about gender";
+const USER_SAFE_DATA = "firstName lastName age about gender skills photoUrl";
 
 
 // get all the pending connection request for the loggedIn user
@@ -72,8 +72,8 @@ userRouter.get("/feed", userAuth, async (req, res) => {
 
     const loggedInUser = req.user;
 
-    const page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req?.query?.page) || 1;
+    let limit = parseInt(req?.query?.limit) || 10;
     limit = limit > 50 ? 50 : limit;  // sanitization of limit
     const skip = (page-1)*limit;
 
@@ -91,11 +91,9 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       hideUsersFromFeed.add(req.toUserId.toString());
     });
 
+    hideUsersFromFeed.add(loggedInUser._id.toString());
     const user = await User.find({
-      $and : [
-        {_id : { $nin : Array.from(hideUsersFromFeed)}},
-        {_id : { $ne : loggedInUser._id}},
-      ]
+      _id: { $nin: Array.from(hideUsersFromFeed) },
     }).select(USER_SAFE_DATA).skip(skip).limit(limit);
 
     res.json({data : user});
