@@ -18,14 +18,21 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
 });
 
 // edit profile API
-profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
+profileRouter.put("/profile/edit", userAuth, async (req, res) => {
     try {
         if(!validateEditProfileData(req)) throw new Error("Invalid edit request");
 
         const loggedInUser = req.user;
-        Object.keys(req.body).forEach(key => (loggedInUser[key] = req.body[key]));
+        // Set all the fields in the user model to the values provided in the request
+        loggedInUser.firstName = req.body.firstName || loggedInUser.firstName;
+        loggedInUser.lastName = req.body.lastName || loggedInUser.lastName;
+        loggedInUser.age = req.body.age || loggedInUser.age;
+        loggedInUser.gender = req.body.gender || loggedInUser.gender;
+        loggedInUser.about = req.body.about || loggedInUser.about;
+        loggedInUser.photoUrl = req.body.photoUrl || loggedInUser.photoUrl;
+        loggedInUser.skills = req.body.skills || loggedInUser.skills; // Overwrite skills entirely
 
-        loggedInUser.save()
+        await loggedInUser.save()
         res.json({
             message : `${loggedInUser.firstName} , your profile updated successfully`,
             data : loggedInUser,
