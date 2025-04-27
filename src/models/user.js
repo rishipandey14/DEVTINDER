@@ -9,14 +9,12 @@ const userSchema = mongoose.Schema({
         required: true,
         lowercase: true,
         trim: true,
-        minLength: 4,
         maxLength: 50
     },
     lastName: {
         type: String,
         lowercase: true,
         trim: true,
-        minLength: 4,
         maxLength: 50
     },
     emailId: {
@@ -43,6 +41,7 @@ const userSchema = mongoose.Schema({
     age: {
         type: Number,
         min: 18,
+        default: 18,
     },
     gender: {
         type: String,
