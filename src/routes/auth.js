@@ -10,7 +10,11 @@ authRouter.post("/signup", async (req, res) => {
         // validation of data
         validateSignupData(req);
 
-        const {password, ...rest } = req.body;
+        const {password, emailId, ...rest } = req.body;
+        const checkUser = await User.findOne({ emailId: emailId });
+        if (checkUser) {
+            throw new Error("Acoount already created with this Email");
+        }
 
         // encrypt the password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -30,7 +34,7 @@ authRouter.post("/signup", async (req, res) => {
         res.cookie("token", token, { expires: new Date(Date.now() + 8 * 3600000) });
         res.status(201).send( savedUser);
     } catch (err) {
-        res.status(400).send("Error saving the user : " + err.message);
+        res.status(400).send(err.message);
     }
 });
 
